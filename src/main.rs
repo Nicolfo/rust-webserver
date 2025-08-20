@@ -2,9 +2,8 @@ use axum::body::Body;
 use axum::{
     Router,
     extract::{OriginalUri, State},
-    http::{HeaderMap, HeaderValue, Response, StatusCode, Uri},
+    http::{HeaderMap, HeaderValue, Response, StatusCode},
     response::IntoResponse,
-    routing::get,
 };
 use bytes::Bytes;
 use mime_guess::from_path;
@@ -54,6 +53,7 @@ async fn fallback_handler(
 
     // Check cache
     if let Some(content) = state.file_cache.read().unwrap().get(path.as_str()) {
+        println!("Request path {}, Serving from cache, rensponse size is {}",&path, content.len());
         return build_response(path.as_str(), content.clone());
     }
 
@@ -67,6 +67,7 @@ async fn fallback_handler(
                 .write()
                 .unwrap()
                 .insert(path.to_string(), content.clone());
+            println!("Request path {}, Serving from filesystem, rensponse size is {}",&file_path.to_str().unwrap() , content.len());
             build_response(path.as_str(), content)
         }
         Err(_) => {
@@ -82,13 +83,16 @@ async fn fallback_handler(
                             .write()
                             .unwrap()
                             .insert(String::from("/index.html"), content.clone());
+                        println!("Request path {}, Serving index.html from filesystem, rensponse size is {}",&file_path.to_str().unwrap() , content.len());
                         build_response("/index.html", content)
                     }
                     Err(_) => {
+                        println!("File not found: {}", path);
                         (StatusCode::NOT_FOUND, format!("File not found: {}", path)).into_response()
                     }
                 }
             } else {
+                println!("File not found: {}", path);
                 (StatusCode::NOT_FOUND, format!("File not found: {}", path)).into_response()
             }
         }
