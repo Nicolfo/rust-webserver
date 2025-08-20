@@ -53,7 +53,11 @@ async fn fallback_handler(
 
     // Check cache
     if let Some(content) = state.file_cache.read().unwrap().get(path.as_str()) {
-        println!("Request path {}, Serving from cache, rensponse size is {}",&path, content.len());
+        println!(
+            "Request path {}, Serving from cache, rensponse size is {}",
+            &path,
+            content.len()
+        );
         return build_response(path.as_str(), content.clone());
     }
 
@@ -67,12 +71,24 @@ async fn fallback_handler(
                 .write()
                 .unwrap()
                 .insert(path.to_string(), content.clone());
-            println!("Request path {}, Serving from filesystem, rensponse size is {}",&file_path.to_str().unwrap() , content.len());
+            println!(
+                "Request path {}, Serving from filesystem, rensponse size is {}",
+                &file_path.to_str().unwrap(),
+                content.len()
+            );
             build_response(path.as_str(), content)
         }
         Err(_) => {
             if SINGLE_PAGE {
                 // Try to serve index.html instead
+                if let Some(content) = state.file_cache.read().unwrap().get("/index.html") {
+                    println!(
+                        "Request path {}, Serving from cache /index.html, rensponse size is {}",
+                        &path,
+                        content.len()
+                    );
+                    return build_response("/index.html", content.clone());
+                }
                 let index_path = PathBuf::from("static/index.html");
                 match fs::read(&index_path).await {
                     Ok(bytes) => {
@@ -83,7 +99,11 @@ async fn fallback_handler(
                             .write()
                             .unwrap()
                             .insert(String::from("/index.html"), content.clone());
-                        println!("Request path {}, Serving index.html from filesystem, rensponse size is {}",&file_path.to_str().unwrap() , content.len());
+                        println!(
+                            "Request path {}, Serving index.html from filesystem, rensponse size is {}",
+                            &file_path.to_str().unwrap(),
+                            content.len()
+                        );
                         build_response("/index.html", content)
                     }
                     Err(_) => {
