@@ -45,6 +45,10 @@ async fn fallback_handler(
     OriginalUri(uri): OriginalUri,
     State(state): State<Arc<AppState>>,
 ) -> Response<Body> {
+    if uri.path().contains(".."){
+        return (StatusCode::BAD_REQUEST, "Bad Request").into_response();
+    }
+
     let path = if uri.path().ends_with("/") {
         format!("{}index.html", uri.path())
     } else {
