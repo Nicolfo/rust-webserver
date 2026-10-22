@@ -1,4 +1,4 @@
-FROM rust:1.88-slim as builder
+FROM rust:1.99-slim-trixie AS builder
 
 RUN apt-get update && \
     apt-get install -y nasm musl-tools && \
@@ -11,7 +11,7 @@ COPY . .
 # Build statically-linked binary
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
-FROM alpine:3.20
+FROM alpine:3.24
 
 # No need for libgcc or libstdc++ when statically linked
 WORKDIR /usr/local/bin/rust-webserver
